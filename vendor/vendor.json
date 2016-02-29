@@ -1,0 +1,46 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"path": "github.com/mattn/go-isatty",
+			"revision": "56b76bdf51f7708750eac80fa38b952bb9f32639",
+			"revisionTime": "2015-12-11T09:06:21+09:00"
+		},
+		{
+			"path": "golang.org/x/sys/unix",
+			"revision": "833a04a10549a95dc34458c195cbad61bbb6cb4d",
+			"revisionTime": "2015-12-10T17:34:15-08:00"
+		},
+		{
+			"path": "golang.org/x/tools/go/ast/astutil",
+			"revision": "108746816ddf01ad0c2dbea08a1baef08bc47313",
+			"revisionTime": "2016-02-23T09:31:56+01:00"
+		},
+		{
+			"path": "golang.org/x/tools/go/buildutil",
+			"revision": "108746816ddf01ad0c2dbea08a1baef08bc47313",
+			"revisionTime": "2016-02-23T09:31:56+01:00"
+		},
+		{
+			"path": "golang.org/x/tools/go/exact",
+			"revision": "108746816ddf01ad0c2dbea08a1baef08bc47313",
+			"revisionTime": "2016-02-23T09:31:56+01:00"
+		},
+		{
+			"path": "golang.org/x/tools/go/gcimporter",
+			"revision": "108746816ddf01ad0c2dbea08a1baef08bc47313",
+			"revisionTime": "2016-02-23T09:31:56+01:00"
+		},
+		{
+			"path": "golang.org/x/tools/go/loader",
+			"revision": "108746816ddf01ad0c2dbea08a1baef08bc47313",
+			"revisionTime": "2016-02-23T09:31:56+01:00"
+		},
+		{
+			"path": "golang.org/x/tools/go/types",
+			"revision": "108746816ddf01ad0c2dbea08a1baef08bc47313",
+			"revisionTime": "2016-02-23T09:31:56+01:00"
+		}
+	]
+}
