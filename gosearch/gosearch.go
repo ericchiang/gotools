@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
-	"go/build"
 	"go/token"
 	"go/types"
 	"io"
@@ -105,32 +104,6 @@ type config struct {
 }
 
 func (c *config) search() (*token.FileSet, []*ast.Ident, error) {
-	// Evaluate package imports first. Only packages that import the target
-	// package will use the type, so don't waste time doing type evaulation
-	// on other packages.
-	targetPkgs := []string{}
-	for _, pkg := range c.packages {
-		// Package is the target package. It's a candidated.
-		if pkg == c.targetPkg {
-			targetPkgs = append(targetPkgs, pkg)
-			continue
-		}
-		buildPkg, err := build.Import(pkg, "", 0)
-		if err != nil {
-			if !c.allowErrors {
-				return nil, nil, err
-			}
-			continue
-		}
-		for _, importedPkg := range buildPkg.Imports {
-			// Package imports the target packages. It's a candidate.
-			if importedPkg == c.targetPkg {
-				targetPkgs = append(targetPkgs, pkg)
-				break
-			}
-		}
-	}
-
 	// Load and evaluate the types of the target package and all packages
 	// which import it.
 	config := loader.Config{AllowErrors: c.allowErrors}
@@ -142,7 +115,7 @@ func (c *config) search() (*token.FileSet, []*ast.Ident, error) {
 		importPkg = config.ImportWithTests
 	}
 	importPkg(c.targetPkg)
-	for _, pkg := range targetPkgs {
+	for _, pkg := range c.packages {
 		importPkg(pkg)
 	}
 	prog, err := config.Load()
@@ -158,7 +131,7 @@ func (c *config) search() (*token.FileSet, []*ast.Ident, error) {
 
 	// Search for uses of that type.
 	var idents []*ast.Ident
-	for _, pkg := range targetPkgs {
+	for _, pkg := range c.packages {
 		info := prog.Imported[pkg]
 		if len(info.Errors) != 0 {
 			continue
