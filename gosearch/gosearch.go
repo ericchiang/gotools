@@ -13,7 +13,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -261,8 +260,8 @@ func printLine(fset *token.FileSet, ident *ast.Ident) error {
 	}
 	filename := pos.Filename
 	if cwd, err := os.Getwd(); err == nil {
-		if f, err := filepath.Rel(cwd, filename); err == nil {
-			filename = f
+		if strings.HasPrefix(filename, cwd) {
+			filename = "." + filename[len(cwd):]
 		}
 	}
 	fmt.Printf("%s:%d:%s", filename, pos.Line, line)
