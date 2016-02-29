@@ -4,14 +4,25 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"go/types"
 	"os"
 	"os/exec"
 	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/types"
 )
+
+var help = `usage: giveupthefunc [-i] [-a] <list of packages>
+
+giveupthefunc counts the number of times function calls are used.
+
+Flags:
+
+	-i	Don't count function calls of functions that are used to satisfy interfaces.
+
+	-a	Allow errors when loading packages. Packages with errors will be omitted from results. 
+`
 
 func fatal(a ...interface{}) {
 	fmt.Fprintln(os.Stderr, a...)
@@ -20,8 +31,11 @@ func fatal(a ...interface{}) {
 
 func main() {
 	interfaceAnalysis := false
+	allowErrors := false
 	flag.BoolVar(&interfaceAnalysis, "i", false, "")
+	flag.BoolVar(&allowErrors, "a", false, "")
 	flag.Parse()
+
 	args := append([]string{"list"}, flag.Args()...)
 	var stdout, stderr bytes.Buffer
 	cmd := exec.Command("go", args...)
@@ -33,7 +47,10 @@ func main() {
 	}
 	pkgs := strings.Split(string(bytes.TrimSpace(stdout.Bytes())), "\n")
 
-	var config loader.Config
+	config := loader.Config{AllowErrors: allowErrors}
+	if allowErrors {
+		config.TypeChecker.Error = func(error) {}
+	}
 	for _, pkg := range pkgs {
 		config.Import(pkg)
 	}
@@ -50,7 +67,11 @@ func main() {
 
 	defs := make(map[types.Object]int)
 	for _, pkg := range pkgs {
-		for _, obj := range program.Imported[pkg].Defs {
+		info := program.Imported[pkg]
+		if allowErrors && len(info.Errors) != 0 {
+			continue
+		}
+		for _, obj := range info.Defs {
 			if obj == nil {
 				continue
 			}
@@ -69,7 +90,11 @@ func main() {
 
 	// Count number of times each definition is used.
 	for _, pkg := range pkgs {
-		for _, obj := range program.Imported[pkg].Uses {
+		info := program.Imported[pkg]
+		if allowErrors && len(info.Errors) != 0 {
+			continue
+		}
+		for _, obj := range info.Uses {
 			if obj == nil {
 				continue
 			}
@@ -86,8 +111,16 @@ func main() {
 	}
 	sort.Sort(byCount(counts))
 	for _, count := range counts {
-		fmt.Printf("\t%d\t%s\n", count.count, count.obj.String())
+		fmt.Printf("\t%d\t%s\n", count.count, objString(count.obj))
 	}
+}
+
+func objString(obj types.Object) string {
+	f, ok := obj.(*types.Func)
+	if !ok {
+		return obj.String()
+	}
+	return f.FullName()
 }
 
 type defCount struct {
@@ -110,6 +143,9 @@ func (b byCount) Less(i, j int) bool {
 func allInterfaces(prog *loader.Program) map[types.Object]*types.Interface {
 	interfaces := map[types.Object]*types.Interface{}
 	for _, info := range prog.AllPackages {
+		if len(info.Errors) != 0 {
+			continue
+		}
 		for _, obj := range info.Defs {
 			if obj == nil {
 				continue
